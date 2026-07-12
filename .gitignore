@@ -1,0 +1,26 @@
+# Credentials and local settings
+.env
+.streamlit/secrets.toml
+config.local.yaml
+*.key
+
+# User-owned inputs and generated data
+inputs/
+outputs/
+work/
+cache/
+*.ppt
+*.pptx
+*.doc
+*.docx
+*.pdf
+
+# Runtime artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+*.log
+.venv/
+venv/
+.deps/
+.DS_Store

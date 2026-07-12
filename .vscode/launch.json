@@ -1,0 +1,30 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "启动网页预览",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "streamlit",
+      "args": ["run", "app.py", "--server.address", "127.0.0.1"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "启动交互式终端",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "main.py",
+      "args": ["menu"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "转换示例课件（修改路径后运行）",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "main.py",
+      "args": ["convert", "${input:courseFile}", "--output", "outputs"],
+      "console": "integratedTerminal"
+    }
+  ],
+  "inputs": [{"id": "courseFile", "type": "promptString", "description": "输入课件绝对路径"}]
+}
