@@ -13,10 +13,18 @@ st.title("课堂文档转 Markdown")
 st.caption("本地运行：Word、PPT、PDF → 讲义 Markdown + LaTeX 公式")
 
 with st.sidebar:
-    provider = st.selectbox("模型提供方", ["openai_compatible", "gemini", "claude"])
-    model = st.text_input("模型名（留空则读取 .env）")
-    base_url = st.text_input("接口地址（OpenAI-compatible 可用）")
-    use_vision = st.checkbox("调用视觉模型识别图片公式", value=True)
+    provider = st.selectbox("模型提供方", ["openai_compatible", "deepseek", "gemini", "claude"])
+    if provider == "deepseek":
+        model = st.selectbox("DeepSeek 模型", ["deepseek-v4-pro", "deepseek-v4-flash"])
+        base_url = "https://api.deepseek.com"
+        st.text_input("接口地址", value=base_url, disabled=True)
+        st.info("DeepSeek V4 目前是文本模型；本工具会保留本地公式提取，但不会把图片发送给 DeepSeek。")
+        use_vision = st.checkbox("调用视觉模型识别图片公式", value=False, disabled=True)
+    else:
+        model = st.text_input("模型名（留空则读取 .env）")
+        base_url = st.text_input("接口地址（OpenAI-compatible 可用）")
+        use_vision = st.checkbox("调用视觉模型识别图片公式", value=True)
+    api_key = st.text_input("API Key（仅本次运行使用）", type="password", help="不会写入 Markdown、输出文件或项目配置。")
     uploaded = st.file_uploader("选择 Word、PPT 或 PDF", type=["doc", "docx", "ppt", "pptx", "pdf"])
 
 if uploaded and st.button("开始转换", type="primary"):
@@ -28,7 +36,7 @@ if uploaded and st.button("开始转换", type="primary"):
     staging.write_bytes(uploaded.getvalue())
     config = ConversionConfig.from_environment(
         output_dir=Path("outputs"), provider=provider, model=model or None,
-        base_url=base_url or None, vision_enabled=use_vision,
+        base_url=base_url or None, api_key=api_key or None, vision_enabled=use_vision,
     )
     with st.spinner("正在提取课堂内容…"):
         result = ConversionJob(config).convert_file(staging)

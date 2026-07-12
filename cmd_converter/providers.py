@@ -69,6 +69,11 @@ class ClaudeProvider(VisionProvider):
 
 
 def get_provider(name: str, api_key: str | None, base_url: str | None, model: str | None) -> VisionProvider | None:
+    # DeepSeek V4 is text-only. Returning None makes the conversion job retain
+    # image formulas in pending_recognition.json instead of issuing invalid
+    # image_url requests to a text-only API.
+    if name == "deepseek":
+        return None
     if not api_key:
         return None
     if name == "openai_compatible":

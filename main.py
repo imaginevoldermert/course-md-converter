@@ -14,7 +14,7 @@ def parser() -> argparse.ArgumentParser:
     convert = sub.add_parser("convert", help="转换一个文件或目录")
     convert.add_argument("input", type=Path)
     convert.add_argument("--output", type=Path, default=Path("outputs"))
-    convert.add_argument("--provider", default="openai_compatible", choices=["openai_compatible", "gemini", "claude"])
+    convert.add_argument("--provider", default="openai_compatible", choices=["openai_compatible", "deepseek", "gemini", "claude"])
     convert.add_argument("--model", default=None)
     convert.add_argument("--base-url", default=None)
     convert.add_argument("--api-key", default=None)

@@ -1,19 +1,42 @@
 from __future__ import annotations
 
+from getpass import getpass
 from pathlib import Path
 
 from .job import ConversionConfig, ConversionJob
 
 
 def interactive_menu() -> int:
+    provider, model, base_url, api_key = "openai_compatible", None, None, None
     try:
         import questionary
         action = questionary.select("课堂文档转 Markdown", choices=["转换文件", "退出"]).ask()
         if action != "转换文件": return 0
         raw = questionary.text("输入文件或目录路径").ask()
+        provider = questionary.select("模型提供方", choices=["openai_compatible", "deepseek", "gemini", "claude"]).ask()
+        if provider == "deepseek":
+            model = questionary.select("DeepSeek 模型", choices=["deepseek-v4-pro", "deepseek-v4-flash"]).ask()
+            base_url = "https://api.deepseek.com"
+            print("DeepSeek 为文本模型：图片公式识别已关闭，本地提取仍会执行。")
+        else:
+            model = questionary.text("模型名（可留空）").ask() or None
+            base_url = questionary.text("接口地址（可留空）").ask() or None
+        api_key = questionary.password("API Key（仅本次运行使用，可留空）").ask() or None
     except ImportError:
         raw = input("输入文件或目录路径（安装 questionary 后可使用方向键菜单）：").strip()
+        provider = input("模型提供方 [openai_compatible/deepseek/gemini/claude]：").strip() or provider
+        if provider == "deepseek":
+            model = input("DeepSeek 模型 [deepseek-v4-pro]：").strip() or "deepseek-v4-pro"
+            base_url = "https://api.deepseek.com"
+            print("DeepSeek 为文本模型：图片公式识别已关闭，本地提取仍会执行。")
+        else:
+            model = input("模型名（可留空）：").strip() or None
+            base_url = input("接口地址（可留空）：").strip() or None
+        api_key = getpass("API Key（仅本次运行使用，可留空）：") or None
     if not raw: return 0
-    result = ConversionJob(ConversionConfig.from_environment(output_dir=Path("outputs"))).convert_path(Path(raw))
+    result = ConversionJob(ConversionConfig.from_environment(
+        output_dir=Path("outputs"), provider=provider, model=model,
+        base_url=base_url, api_key=api_key, vision_enabled=provider != "deepseek",
+    )).convert_path(Path(raw))
     for item in result: print(f"完成：{item.markdown_path}")
     return 0

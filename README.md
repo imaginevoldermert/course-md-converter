@@ -8,7 +8,7 @@
 
 - 支持 `.doc/.docx/.ppt/.pptx/.pdf`；旧式 `.doc/.ppt` 在 Windows 上通过已安装的 Office 转换。
 - 提取标题、正文、表格、备注中的文本、图片与 Office 原生公式。
-- 对图片公式使用可插拔视觉模型：OpenAI-compatible、Gemini、Claude。
+- 对图片公式使用可插拔视觉模型：OpenAI-compatible、Gemini、Claude；提供 DeepSeek V4 的文本处理选项。
 - 无 API Key 也能生成本地提取结果，并输出 `pending_recognition.json` 供后续补识别。
 - Streamlit 网页预览可实时渲染 LaTeX；交互式终端可通过方向键选择任务。
 
@@ -31,6 +31,21 @@ CMD_MODEL=your-vision-model
 CMD_BASE_URL=https://your-compatible-api.example/v1
 CMD_API_KEY=your-secret-key
 ```
+
+### DeepSeek V4
+
+网页中直接选择 `deepseek`，再选择 `deepseek-v4-pro`（质量优先）或 `deepseek-v4-flash`（速度与成本优先）。接口会自动填为 `https://api.deepseek.com`。也可以在 `.env` 中设置：
+
+```ini
+CMD_PROVIDER=deepseek
+CMD_MODEL=deepseek-v4-pro
+CMD_BASE_URL=https://api.deepseek.com
+CMD_API_KEY=你的DeepSeek_API_Key
+```
+
+DeepSeek V4 是文本模型，因此本项目会自动关闭图片公式识别；文字、表格及 Office 原生公式的本地提取仍会正常执行。
+
+网页与终端菜单都提供“仅本次运行使用”的 API Key 密码输入框，无需先创建 `.env`。该 Key 只在内存中传给当前转换任务，不会写入 Markdown、输出文件或项目配置。
 
 ## 使用
 
