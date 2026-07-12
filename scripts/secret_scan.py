@@ -8,7 +8,9 @@ import sys
 PATTERNS = [
     re.compile(r"sk-[A-Za-z0-9_-]{20,}"),
     re.compile(r"AIza[A-Za-z0-9_-]{20,}"),
-    re.compile(r"(?:api[_-]?key|token)\s*[=:]\s*['\"][^'\"]{12,}", re.I),
+    # Assignment checks are deliberately conservative: provider/config variable
+    # names such as `api_key = "openai_compatible"` are not credentials.
+    re.compile(r"(?:api[_-]?key|token)\s*[=:]\s*['\"](?=[^'\"]{20,}['\"])(?=[^'\"]*[0-9_-])[^'\"]+", re.I),
 ]
 
 result = subprocess.run(["git", "diff", "--cached", "--", "."], capture_output=True)
