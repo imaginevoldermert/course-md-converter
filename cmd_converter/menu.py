@@ -9,11 +9,14 @@ from .job import ConversionConfig, ConversionJob
 
 def interactive_menu() -> int:
     provider, model, base_url, api_key = "openai_compatible", None, None, None
+    output_dir = Path("outputs")
     try:
         import questionary
         action = questionary.select("课堂文档转 Markdown", choices=["转换文件", "退出"]).ask()
         if action != "转换文件": return 0
         raw = questionary.text("输入文件或目录路径").ask()
+        output_raw = questionary.path("输出文件夹", default=str(Path("outputs").resolve())).ask()
+        output_dir = Path(output_raw or "outputs").expanduser()
         provider = questionary.select("模型提供方", choices=["openai_compatible", "deepseek", "gemini", "claude"]).ask()
         if provider == "deepseek":
             model = questionary.select("DeepSeek 模型", choices=["deepseek-v4-pro", "deepseek-v4-flash"]).ask()
@@ -25,6 +28,8 @@ def interactive_menu() -> int:
         api_key = questionary.password("API Key（仅本次运行使用，可留空）").ask() or None
     except ImportError:
         raw = input("输入文件或目录路径（安装 questionary 后可使用方向键菜单）：").strip()
+        output_raw = input(f"输出文件夹 [{Path('outputs').resolve()}]：").strip()
+        output_dir = Path(output_raw or "outputs").expanduser()
         provider = input("模型提供方 [openai_compatible/deepseek/gemini/claude]：").strip() or provider
         if provider == "deepseek":
             model = input("DeepSeek 模型 [deepseek-v4-pro]：").strip() or "deepseek-v4-pro"
@@ -40,8 +45,9 @@ def interactive_menu() -> int:
         print(f"文件或目录不存在：{input_path}")
         return 1
     try:
+        output_dir.mkdir(parents=True, exist_ok=True)
         result = ConversionJob(ConversionConfig.from_environment(
-            output_dir=Path("outputs"), provider=provider, model=model,
+            output_dir=output_dir, provider=provider, model=model,
             base_url=base_url, api_key=api_key, vision_enabled=provider != "deepseek",
         )).convert_path(input_path)
     except Exception as exc:
