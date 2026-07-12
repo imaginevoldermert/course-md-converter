@@ -5,18 +5,19 @@ from pathlib import Path
 import traceback
 
 from .job import ConversionConfig, ConversionJob
+from .defaults import DEFAULT_OUTPUT_DIR
 
 
 def interactive_menu() -> int:
     provider, model, base_url, api_key = "openai_compatible", None, None, None
-    output_dir = Path("outputs")
+    output_dir = DEFAULT_OUTPUT_DIR
     try:
         import questionary
         action = questionary.select("课堂文档转 Markdown", choices=["转换文件", "退出"]).ask()
         if action != "转换文件": return 0
         raw = questionary.text("输入文件或目录路径").ask()
-        output_raw = questionary.path("输出文件夹", default=str(Path("outputs").resolve())).ask()
-        output_dir = Path(output_raw or "outputs").expanduser()
+        output_raw = questionary.path("输出文件夹", default=str(DEFAULT_OUTPUT_DIR)).ask()
+        output_dir = Path(output_raw or DEFAULT_OUTPUT_DIR).expanduser()
         provider = questionary.select("模型提供方", choices=["openai_compatible", "deepseek", "gemini", "claude"]).ask()
         if provider == "deepseek":
             model = questionary.select("DeepSeek 模型", choices=["deepseek-v4-pro", "deepseek-v4-flash"]).ask()
@@ -28,8 +29,8 @@ def interactive_menu() -> int:
         api_key = questionary.password("API Key（仅本次运行使用，可留空）").ask() or None
     except ImportError:
         raw = input("输入文件或目录路径（安装 questionary 后可使用方向键菜单）：").strip()
-        output_raw = input(f"输出文件夹 [{Path('outputs').resolve()}]：").strip()
-        output_dir = Path(output_raw or "outputs").expanduser()
+        output_raw = input(f"输出文件夹 [{DEFAULT_OUTPUT_DIR}]：").strip()
+        output_dir = Path(output_raw or DEFAULT_OUTPUT_DIR).expanduser()
         provider = input("模型提供方 [openai_compatible/deepseek/gemini/claude]：").strip() or provider
         if provider == "deepseek":
             model = input("DeepSeek 模型 [deepseek-v4-pro]：").strip() or "deepseek-v4-pro"

@@ -10,6 +10,7 @@ import streamlit as st
 
 from cmd_converter.job import ConversionConfig, ConversionJob
 from cmd_converter.result_files import build_result_zip, list_result_files
+from cmd_converter.defaults import DEFAULT_OUTPUT_DIR
 
 st.set_page_config(page_title="课堂文档转 Markdown", layout="wide")
 st.title("课堂文档转 Markdown")
@@ -30,6 +31,7 @@ with st.sidebar:
     api_key = st.text_input("API Key（仅本次运行使用）", type="password", help="不会写入 Markdown、输出文件或项目配置。")
     uploaded = st.file_uploader("选择 Word、PPT 或 PDF", type=["doc", "docx", "ppt", "pptx", "pdf"])
     output_presets = {
+        "默认输出目录": DEFAULT_OUTPUT_DIR,
         "项目 outputs": (Path.cwd() / "outputs").resolve(),
         "桌面": Path.home() / "Desktop" / "course-md-converter",
         "文档": Path.home() / "Documents" / "course-md-converter",
@@ -37,7 +39,7 @@ with st.sidebar:
     }
     output_choice = st.selectbox("输出位置", [*output_presets, "自定义路径"])
     if output_choice == "自定义路径":
-        output_text = st.text_input("自定义输出文件夹", value=str((Path.cwd() / "outputs").resolve()))
+        output_text = st.text_input("自定义输出文件夹", value=str(DEFAULT_OUTPUT_DIR))
     else:
         output_text = st.text_input("输出文件夹", value=str(output_presets[output_choice]), disabled=True)
 

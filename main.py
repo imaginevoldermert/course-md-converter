@@ -6,6 +6,7 @@ from pathlib import Path
 
 from cmd_converter.job import ConversionConfig, ConversionJob
 from cmd_converter.menu import interactive_menu
+from cmd_converter.defaults import DEFAULT_OUTPUT_DIR
 
 
 def parser() -> argparse.ArgumentParser:
@@ -13,7 +14,7 @@ def parser() -> argparse.ArgumentParser:
     sub = p.add_subparsers(dest="command", required=True)
     convert = sub.add_parser("convert", help="转换一个文件或目录")
     convert.add_argument("input", type=Path)
-    convert.add_argument("--output", type=Path, default=Path("outputs"))
+    convert.add_argument("--output", type=Path, default=DEFAULT_OUTPUT_DIR)
     convert.add_argument("--provider", default="openai_compatible", choices=["openai_compatible", "deepseek", "gemini", "claude"])
     convert.add_argument("--model", default=None)
     convert.add_argument("--base-url", default=None)
