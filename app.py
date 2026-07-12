@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import uuid
+import traceback
 from pathlib import Path
 
 import streamlit as st
@@ -28,29 +29,46 @@ with st.sidebar:
     uploaded = st.file_uploader("选择 Word、PPT 或 PDF", type=["doc", "docx", "ppt", "pptx", "pdf"])
 
 if uploaded and st.button("开始转换", type="primary"):
-    work = Path.cwd() / "work"
-    work.mkdir(exist_ok=True)
-    upload_dir = work / f"cmd_upload_{uuid.uuid4().hex[:12]}"
-    upload_dir.mkdir()
-    staging = upload_dir / uploaded.name
-    staging.write_bytes(uploaded.getvalue())
-    config = ConversionConfig.from_environment(
-        output_dir=Path("outputs"), provider=provider, model=model or None,
-        base_url=base_url or None, api_key=api_key or None, vision_enabled=use_vision,
-    )
-    with st.spinner("正在提取课堂内容…"):
-        result = ConversionJob(config).convert_file(staging)
-    st.session_state["result"] = result
+    try:
+        work = Path.cwd() / "work"
+        work.mkdir(exist_ok=True)
+        upload_dir = work / f"cmd_upload_{uuid.uuid4().hex[:12]}"
+        upload_dir.mkdir()
+        staging = upload_dir / uploaded.name
+        staging.write_bytes(uploaded.getvalue())
+        config = ConversionConfig.from_environment(
+            output_dir=Path("outputs"), provider=provider, model=model or None,
+            base_url=base_url or None, api_key=api_key or None, vision_enabled=use_vision,
+        )
+        with st.spinner("正在提取课堂内容…"):
+            result = ConversionJob(config).convert_file(staging)
+        st.session_state["result"] = result
+        st.session_state.pop("conversion_error", None)
+    except Exception as exc:
+        work.mkdir(exist_ok=True)
+        (work / "last_error.log").write_text(traceback.format_exc(), encoding="utf-8")
+        st.session_state["conversion_error"] = str(exc)
+
+if st.session_state.get("conversion_error"):
+    st.error(f"转换失败：{st.session_state['conversion_error']}")
+    st.caption("界面仍会保持运行。详细信息已保存到 work/last_error.log。")
 
 result = st.session_state.get("result")
 if result:
     st.success(f"已生成：{result.markdown_path.name}")
     markdown = result.markdown_path.read_text(encoding="utf-8")
-    preview, source = st.tabs(["渲染预览", "Markdown 源码"])
+    # Rendering a 100+ page Markdown document at once can exhaust the embedded
+    # browser and close its tab. Preview one section at a time while keeping the
+    # complete document available for download.
+    raw_sections = markdown.split("\n## ")
+    sections = [raw_sections[0]] + ["## " + section for section in raw_sections[1:]]
+    selected = st.number_input("预览章节", min_value=1, max_value=len(sections), value=1, step=1)
+    visible_markdown = sections[int(selected) - 1]
+    preview, source = st.tabs(["分段渲染预览", "当前章节源码"])
     with preview:
-        st.markdown(markdown)
+        st.markdown(visible_markdown)
     with source:
-        st.code(markdown, language="markdown")
+        st.code(visible_markdown, language="markdown")
     st.download_button("下载 Markdown", markdown, file_name=result.markdown_path.name, mime="text/markdown")
     if result.pending_path:
         st.warning(f"存在待复核内容：{result.pending_path.name}")

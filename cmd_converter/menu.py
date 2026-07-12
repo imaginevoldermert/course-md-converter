@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from getpass import getpass
 from pathlib import Path
+import traceback
 
 from .job import ConversionConfig, ConversionJob
 
@@ -34,9 +35,21 @@ def interactive_menu() -> int:
             base_url = input("接口地址（可留空）：").strip() or None
         api_key = getpass("API Key（仅本次运行使用，可留空）：") or None
     if not raw: return 0
-    result = ConversionJob(ConversionConfig.from_environment(
-        output_dir=Path("outputs"), provider=provider, model=model,
-        base_url=base_url, api_key=api_key, vision_enabled=provider != "deepseek",
-    )).convert_path(Path(raw))
+    input_path = Path(raw.strip().strip('"').strip("'"))
+    if not input_path.exists():
+        print(f"文件或目录不存在：{input_path}")
+        return 1
+    try:
+        result = ConversionJob(ConversionConfig.from_environment(
+            output_dir=Path("outputs"), provider=provider, model=model,
+            base_url=base_url, api_key=api_key, vision_enabled=provider != "deepseek",
+        )).convert_path(input_path)
+    except Exception as exc:
+        work = Path("work")
+        work.mkdir(exist_ok=True)
+        (work / "last_error.log").write_text(traceback.format_exc(), encoding="utf-8")
+        print(f"转换失败：{exc}")
+        print("终端不会退出；详细信息已保存到 work/last_error.log。")
+        return 1
     for item in result: print(f"完成：{item.markdown_path}")
     return 0
